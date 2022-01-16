@@ -1,0 +1,78 @@
+CREATE INDEX mon_idx
+ON month_values(MM);
+
+DROP INDEX mon_idx;
+
+--EXERCISE 12
+--1.
+CREATE OR REPLACE VIEW Daily_Billing AS
+SELECT order_line,
+       product_id,
+	   sales,
+	   discount,
+	   order_date
+FROM sales
+WHERE order_date IN (SELECT MAX(order_date)
+					 FROM sales);
+
+SELECT *
+FROM Daily_Billing;
+
+--2.
+DROP VIEW Daily_Billing;
+
+--LENGTH
+SELECT customer_name, LENGTH(customer_name) AS Characters
+FROM customer
+WHERE age>30;
+
+SELECT customer_name, LENGTH(customer_name) AS Characters
+FROM customer
+WHERE LENGTH(customer_name)>10;
+
+--REPLACE
+SELECT customer_name,
+       country,
+	   REPLACE(LOWER(country),'United States','US') AS country_new
+FROM customer;
+
+--TRIM,LTRIM,RTRIM
+SELECT TRIM(LEADING ' ' FROM '   Start-Tech Academy   ' );
+SELECT TRIM(TRAILING ' ' FROM '   Start-Tech Academy   ' );
+SELECT TRIM(BOTH ' ' FROM '   Start-Tech Academy   ' );
+SELECT TRIM('   Start-Tech Academy   ' );
+
+--CONCATENATION ||
+SELECT customer_name, 
+       city||', '||state||', '|| country AS address
+FROM customer;
+
+-- SUBSTRING
+SELECT 
+      customer_id,
+	  customer_name,
+	  SUBSTRING(customer_id FOR 2) AS cust_group
+FROM customer
+WHERE SUBSTRING(customer_id FOR 2) = 'AB';
+
+SELECT 
+      customer_id,
+	  customer_name,
+	  SUBSTRING(customer_id FROM 4 FOR 5) AS cust_number
+FROM customer
+WHERE SUBSTRING(customer_id FOR 2) = 'AB';
+
+--LIST AGGREGATION
+----STRING AGGREGATOR
+SELECT * 
+FROM sales 
+ORDER BY order_id;
+
+SELECT 
+      order_id,
+	  STRING_AGG(product_id, ', ')
+FROM sales
+GROUP BY order_id
+ORDER BY order_id;
+
+
