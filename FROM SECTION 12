@@ -1,0 +1,234 @@
+SELECT SUM(Profit) AS Total_Profit
+FROM sales
+
+SELECT AVG(Sales) AS Average_Sales
+FROM sales
+
+SELECT MAX(Sales) AS Max_Sales
+FROM sales
+
+--1.
+SELECT SUM(sales) AS Total_Sales
+FROM sales;
+--2. 
+SELECT COUNT(customer_id) AS No_of_Customers
+FROM customer
+WHERE /*region = 'North' AND*/ age >19 AND age < 31
+--3.
+SELECT AVG(age) AS AveAgeInEast
+FROM customer
+WHERE region = 'East'
+--4.
+SELECT MIN(age) AS MinAgeInPhil,
+MAX(age) AS MaxAgeInPhil
+FROM customer
+WHERE city = 'Philadelphia'
+
+--GROUP BY
+SELECT region, count(customer_id) AS cust_count
+FROM customer
+GROUP BY region
+ORDER BY cust_count DESC
+LIMIT 2
+
+SELECT region, COUNT(customer_id)
+FROM customer
+GROUP BY region
+HAVING COUNT(customer_id)>200
+
+--1. 
+SELECT product_id, SUM(sales) AS Total_Sales,
+ SUM(quantity) as Total_Quantity, 
+ COUNT(order_id) as Order_Count,
+ MAX(sales) AS MAX_Sales,
+ MIN(sales) AS MIN_Sales,
+ AVG(sales) AS AVG_Sales
+FROM sales
+GROUP BY product_id
+ORDER BY Total_Sales DESC;
+
+--2. 
+SELECT product_id, SUM(quantity) AS Total_Qty
+FROM sales
+GROUP BY product_id
+HAVING SUM(quantity) > 10
+
+
+--CASE
+SELECT *,
+    CASE WHEN age < 30 THEN 'Young'
+	    WHEN age > 60 THEN 'Senior'
+		ELSE 'Middle Aged'
+	END AS Age_Category
+FROM customer
+
+-- JOINS
+SELECT * FROM pg_stat_activity WHERE wait_event IS NOT NULL 
+
+CREATE TABLE Sales_2015 AS 
+    SELECT * 
+	FROM sales
+	WHERE ship_date BETWEEN '2015-01-01' AND '2015-12-31'
+SELECT COUNT(*) 
+FROM Sales_2015
+SELECT COUNT(DISTINCT customer_id) FROM Sales_2015;
+    
+
+CREATE TABLE customer_20_60 AS
+    SELECT *
+	FROM customer
+	WHERE age BETWEEN 20 AND 60
+
+SELECT *
+FROM customer_20_60	
+SELECT COUNT(*)
+FROM customer_20_60	
+
+--INNER JOIN
+
+SELECT 
+    a.order_line,
+	a.product_id,
+	a.customer_id,
+	a.sales,
+	b.customer_name,
+	b.age
+FROM Sales_2015 AS a
+FULL JOIN customer_20_60 AS b
+ON a.customer_id = b.customer_id
+ORDER BY customer_id;
+
+--CROSS JOIN
+CREATE TABLE month_values (MM INTEGER);
+CREATE TABLE year_values (YYYY INTEGER);
+
+INSERT INTO month_values VALUES (1), (2), (3), (4), (5)
+INSERT INTO year_values VALUES (2015), (2016), (2017), (2018)
+
+SELECT * FROM month_values
+SELECT * FROM year_values
+
+SELECT a.YYYY, b.MM
+FROM year_values AS a, month_values AS b
+
+-- INTERSECT
+SELECT customer_id
+FROM sales_2015
+INTERSECT 
+SELECT customer_id
+FROM customer_20_60
+
+
+SELECT customer_id
+FROM sales_2015
+EXCEPT 
+SELECT customer_id
+FROM customer_20_60
+
+SELECT customer_id
+FROM sales_2015
+UNION 
+SELECT customer_id
+FROM customer_20_60
+
+SELECT customer_id
+FROM sales_2015
+INTERSECT ALL
+SELECT customer_id
+FROM customer_20_60
+
+--EXERCISE 10
+--1.
+SELECT a.state, SUM(b.sales) AS Total_Sales
+FROM customer_20_60 as a
+JOIN sales_2015 AS b
+ON a.customer_id =  b.customer_id
+GROUP BY a.state
+--2.
+SELECT 
+	a.product_id,
+	a.product_name,
+	a.category,
+	SUM(b.sales) AS Total_Sales,
+	SUM(b.quantity) AS Total_Qty_Sold
+FROM product AS a
+LEFT JOIN sales AS b
+  ON a.product_id = b.product_id
+GROUP BY a.product_id
+
+SELECT * 
+FROM product
+
+--SUBQUERIES
+
+SELECT * 
+FROM sales
+WHERE customer_id IN(
+  SELECT customer_id FROM customer WHERE age >60);
+
+SELECT
+    a.product_id,
+	a.product_name,
+	a.category,
+	b.quantity
+FROM product AS a
+LEFT JOIN (SELECT product_id,
+		      SUM(quantity) AS quantity
+		  FROM sales
+		  GROUP BY product_id) AS b
+ON a.product_id = b.product_id
+ORDER BY b.quantity DESC;
+
+SELECT *
+FROM sales
+WHERE customer_id IN (SELECT DISTINCT customer_id
+	 				 FROM customer
+					 WHERE age > 60);
+					 
+SELECT
+    a.product_id,
+	a.product_name, 
+	a.category,
+	b.quantity
+FROM product AS a
+LEFT JOIN (SELECT product_id,
+		  SUM(quantity) AS quantity
+		  FROM sales
+		  GROUP BY product_id) AS b
+    ON a.product_id = b.product_id
+ORDER BY b.quantity DESC;
+
+SELECT customer_id,
+       order_line,
+	   (SELECT customer_name
+		FROM customer
+		WHERE sales.customer_id = customer_id)
+FROM sales
+ORDER BY customer_id
+
+-- EXERCIES 11
+SELECT *,
+       customer.customer_name,
+	   customer.age,
+	   product.product_name,
+	   product.category
+FROM sales
+LEFT JOIN customer
+ON sales.customer_id = customer.customer_id
+LEFT JOIN product
+ON sales.product_id = product.product_id
+
+--OR
+SELECT c.customer_name,
+       c.age,
+	   sp.*
+FROM customer AS c
+RIGHT JOIN (SELECT s.*,
+			       p.product_name,
+			       p.category
+		    FROM product AS p
+		    LEFT JOIN sales AS s
+		       ON p.product_id = s.product_id) AS sp
+   ON c.customer_id = sp.product_id			 
+			
+	   
